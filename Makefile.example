@@ -1,0 +1,74 @@
+# Makefile for Laravel
+
+# Copy .env.example to .env
+copy-env:
+	cp .env.example .env
+
+# Replace database credentials in .env
+replace-db-credentials:
+	sed -i 's/APP_NAME=Laravel/APP_NAME="Laravel Boilerplate"/g' .env
+	sed -i 's/APP_URL=http:\/\/localhost/APP_URL=http:\/\/laravel-boilerplate.local\/public/g' .env
+	sed -i 's/LOG_CHANNEL=stack/LOG_CHANNEL=daily/g' .env
+	sed -i 's/DB_CONNECTION=mysql/DB_CONNECTION=mysql/g' .env
+	sed -i 's/DB_HOST=127.0.0.1/DB_HOST=127.0.0.1/g' .env
+	sed -i 's/DB_PORT=3306/DB_PORT=3306/g' .env
+	sed -i 's/DB_DATABASE=homestead/DB_DATABASE=laravel-boilerplate/g' .env
+	sed -i 's/DB_USERNAME=homestead/DB_USERNAME=root/g' .env
+	sed -i 's/DB_PASSWORD=secret/DB_PASSWORD=password/g' .env
+
+# Install dependencies
+install:
+	composer install
+
+# Generate application key
+key-generate:
+	php artisan key:generate
+
+# Run database migrations
+migrate:
+	php artisan migrate
+
+# Seed the database
+db-seed:
+	php artisan db:seed
+
+# Prepare Virtual Host
+vhost:
+	sudo cp webserver/nginx/laravel-boilerplate.local /etc/nginx/sites-available/
+	sudo ln -s /etc/nginx/sites-available/laravel-boilerplate.local /etc/nginx/sites-enabled/laravel-boilerplate.local
+
+# Add entry to hosts file
+add-host-entry:
+	echo "127.0.0.1 laravel-boilerplate.local" | sudo tee -a /etc/hosts
+
+# Change ownership
+change-ownership:
+	sudo chown -R $(shell whoami):www-data .
+
+# Verify nginx configuration
+verify-nginx:
+	sudo nginx -t
+
+# Restart the web server nginx
+restart-nginx:
+	sudo nginx -s reload
+
+# Run all setup tasks
+setup: copy-env replace-db-credentials install key-generate migrate db-seed vhost add-host-entry change-ownership verify-nginx restart-nginx
+
+# Help
+help:
+	@echo "Available targets:"
+	@echo "  - copy-env: Copy .env.example to .env"
+	@echo "  - replace-db-credentials: Replace database credentials in .env"
+	@echo "  - key-generate: Generate application key"
+	@echo "  - migrate: Run database migrations"
+	@echo "  - db-seed: Seed the database"
+	@echo "  - install: Install dependencies"
+	@echo "  - vhost: Configure nginx virtual host"
+	@echo "  - add-host-entry: Virtual host entry"
+	@echo "  - change-ownership: Change ownership of current directory"
+	@echo "  - verify-nginx: Verify nginx configuration"
+	@echo "  - restart-nginx: Restart the web server nginx"
+	@echo "  - setup: Run all setup tasks"
+	@echo "  - help: Show this help message"
